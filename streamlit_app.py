@@ -18,7 +18,6 @@ if price:
 else:
     st.warning("⚠️ Failed to fetch live price from Binance.")
 
-
 # Indicators
 rsi, macd, bb = calculate_indicators()
 st.markdown(f"**📉 RSI:** {rsi:.2f} | **MACD:** {macd:.2f} | **BB %B:** {bb:.2f}")
