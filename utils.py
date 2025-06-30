@@ -5,6 +5,7 @@ def fetch_live_price():
     url = "https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT"
     try:
         response = requests.get(url, timeout=10)
+        print("Binance Response:", response.text)  # 👈 Add this line
         data = response.json()
         if isinstance(data, dict) and "price" in data:
             return float(data["price"])
@@ -12,7 +13,8 @@ def fetch_live_price():
             raise ValueError(f"Unexpected response: {data}")
     except Exception as e:
         print(f"[ERROR] fetch_live_price: {e}")
-        return None  # Show 'Fetching failed' in Streamlit
+        return None
+
 
 def calculate_indicators():
     url = "https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=100"
