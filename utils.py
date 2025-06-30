@@ -16,32 +16,41 @@ def fetch_live_price():
 
 def calculate_indicators():
     url = "https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=100"
-    df = pd.DataFrame(requests.get(url).json())[[0, 1, 2, 3, 4]]
-    df.columns = ['time', 'open', 'high', 'low', 'close']
-    df['close'] = df['close'].astype(float)
+    try:
+        raw_data = requests.get(url, timeout=10).json()
+        if not isinstance(raw_data, list) or len(raw_data) == 0:
+            raise ValueError("Binance API returned no kline data.")
 
-    # RSI
-    delta = df['close'].diff()
-    gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
-    loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
-    rs = gain / loss
-    rsi = 100 - (100 / (1 + rs))
-    rsi_value = rsi.iloc[-1]
+        df = pd.DataFrame(raw_data)[[0, 1, 2, 3, 4]]
+        df.columns = ['time', 'open', 'high', 'low', 'close']
+        df['close'] = df['close'].astype(float)
 
-    # MACD
-    ema12 = df['close'].ewm(span=12, adjust=False).mean()
-    ema26 = df['close'].ewm(span=26, adjust=False).mean()
-    macd = ema12 - ema26
-    macd_value = macd.iloc[-1]
+        # RSI
+        delta = df['close'].diff()
+        gain = delta.where(delta > 0, 0).rolling(14).mean()
+        loss = -delta.where(delta < 0, 0).rolling(14).mean()
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs))
+        rsi_value = rsi.iloc[-1] if not rsi.isnull().all() else 50
 
-    # Bollinger %B
-    ma20 = df['close'].rolling(window=20).mean()
-    std = df['close'].rolling(window=20).std()
-    upper = ma20 + 2 * std
-    lower = ma20 - 2 * std
-    bb = (df['close'].iloc[-1] - lower.iloc[-1]) / (upper.iloc[-1] - lower.iloc[-1])
+        # MACD
+        ema12 = df['close'].ewm(span=12).mean()
+        ema26 = df['close'].ewm(span=26).mean()
+        macd_value = (ema12 - ema26).iloc[-1]
 
-    return round(rsi_value, 2), round(macd_value, 2), round(bb, 2)
+        # Bollinger %B
+        ma20 = df['close'].rolling(20).mean()
+        std = df['close'].rolling(20).std()
+        upper = ma20 + 2 * std
+        lower = ma20 - 2 * std
+        bb_value = (df['close'].iloc[-1] - lower.iloc[-1]) / (upper.iloc[-1] - lower.iloc[-1])
+
+        return round(rsi_value, 2), round(macd_value, 2), round(bb_value, 2)
+
+    except Exception as e:
+        print(f"[ERROR] calculate_indicators: {e}")
+        return 50, 0, 0.5  # Safe default values
+
 
 def make_prediction(current_price, target_price, rsi, macd, bb):
     score = 0
