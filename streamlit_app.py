@@ -13,7 +13,11 @@ target_time = st.time_input("🕒 Target Time", value=datetime.datetime.now().ti
 
 # Live Price
 price = fetch_live_price()
-st.markdown(f"**📊 Live BTC Price:** ${price:.2f}")
+if price:
+    st.markdown(f"**📊 Live BTC Price:** ${price:.2f}")
+else:
+    st.warning("⚠️ Failed to fetch live price from Binance.")
+
 
 # Indicators
 rsi, macd, bb = calculate_indicators()
