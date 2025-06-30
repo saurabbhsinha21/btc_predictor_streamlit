@@ -2,18 +2,14 @@ import requests
 import pandas as pd
 
 def fetch_live_price():
-    url = "https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT"
     try:
-        response = requests.get(url, timeout=10)
-        print("Binance Response:", response.text)  # 👈 Add this line
-        data = response.json()
-        if isinstance(data, dict) and "price" in data:
-            return float(data["price"])
-        else:
-            raise ValueError(f"Unexpected response: {data}")
+        url = "https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT"
+        data = requests.get(url, timeout=10).json()
+        return float(data["lastPrice"])
     except Exception as e:
         print(f"[ERROR] fetch_live_price: {e}")
         return None
+
 
 
 def calculate_indicators():
